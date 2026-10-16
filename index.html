@@ -2,594 +2,445 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI-Ventilation Survey Automation Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI-Ventilation Survey Auto-Submitter</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f8fafc; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .tab-btn.active {
-            border-bottom: 2px solid #0d9488;
-            color: #0f766e;
-            font-weight: 700;
+        /* Touch optimization & smooth scrolling */
+        html { -webkit-tap-highlight-color: transparent; }
+        input[type="range"]::-webkit-slider-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0d9488;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-32">
 
-    <!-- Top Header Bar -->
-    <header class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-40 shadow-sm flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-teal-500/20">
-                AI
+    <!-- Mobile-First Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <span class="w-9 h-9 rounded-xl bg-teal-600 text-white font-black flex items-center justify-center text-sm shadow-md shadow-teal-600/30">AI</span>
+                <div>
+                    <h1 class="text-sm font-bold text-slate-900 leading-tight">AI-Ventilation Submitter</h1>
+                    <p class="text-[11px] text-slate-500">الذكاء الاصطناعي في أجهزة التنفس الصناعي</p>
+                </div>
             </div>
-            <div>
-                <h1 class="text-lg font-bold text-slate-900 leading-tight">AI-Ventilation Study Auto-Submission</h1>
-                <p class="text-xs text-slate-500">الذكاء الاصطناعي في أجهزة التنفس الصناعي • Weighted Headless Submitter</p>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <button onclick="toggleModal('entryModal')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition border border-slate-300 flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                Inspect Entry IDs / Prefill
+            <button onclick="toggleModal('helpModal')" class="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg border border-slate-200 text-xs font-semibold flex items-center gap-1">
+                <span>❓ Help / Setup</span>
             </button>
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                ● 7 Pages Supported
-            </span>
         </div>
     </header>
 
-    <!-- Main Workspace -->
-    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        
-        <!-- Left Panel: Execution & Batch Controls -->
-        <div class="w-full lg:w-4/12 p-6 bg-white border-r border-slate-200 flex flex-col justify-between overflow-y-auto max-h-[calc(100vh-73px)]">
-            <div class="space-y-6">
-                <!-- Survey Parameters Card -->
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600">Submission Parameters</h2>
-                    
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Google Form ID or View URL</label>
-                        <input id="formId" type="text" value="1FAIpQLScU0c79q-kLg-m6p1O621s3GqK6hF_E-AIventSample" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="1FAIpQLSc...">
-                        <p class="text-[11px] text-slate-400 mt-1">Found in your Google Form view link: <code>/e/&lt;FORM_ID&gt;/viewform</code></p>
-                    </div>
+    <main class="max-w-4xl mx-auto p-4 space-y-4">
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Submissions Count</label>
-                            <input id="subCount" type="number" min="1" max="1000" value="15" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Delay per roll (ms)</label>
-                            <input id="subDelay" type="number" min="50" step="50" value="350" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <div class="pt-2 border-t border-slate-200">
-                        <label class="flex items-center space-x-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                            <input id="enforceConsent" type="checkbox" checked class="rounded text-teal-600 focus:ring-teal-500">
-                            <span>Lock Consent (Q1) to 100% "نعم | Yes"</span>
-                        </label>
-                    </div>
+        <!-- STEP 1: Connect Form (Crucial for Form to Actually Save) -->
+        <div class="bg-white p-4 rounded-2xl border border-teal-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="w-6 h-6 rounded-full bg-teal-100 text-teal-800 font-bold text-xs flex items-center justify-center">1</span>
+                    <h2 class="text-sm font-bold text-slate-800">Connect Your Survey Link</h2>
                 </div>
-
-                <!-- Live Submission Console Output -->
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Console Log</h3>
-                        <button onclick="clearLogs()" class="text-[11px] text-slate-400 hover:text-slate-600">Clear</button>
-                    </div>
-                    <div id="logConsole" class="w-full h-44 bg-slate-900 rounded-xl p-3 font-mono text-[11px] text-emerald-400 overflow-y-auto space-y-1 shadow-inner border border-slate-800">
-                        <p class="text-slate-500">// System initialized. Ready to generate randomized responses...</p>
-                    </div>
-                </div>
+                <span id="connectionBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">⚠️ Needs Setup</span>
             </div>
 
-            <!-- Start / Stop Button Action Area -->
-            <div class="mt-6 pt-4 border-t border-slate-200">
-                <div id="progressBox" class="hidden mb-4 space-y-1.5">
-                    <div class="flex justify-between text-xs font-bold text-slate-700">
-                        <span id="progressStatus">Submitting...</span>
-                        <span id="progressPct">0%</span>
-                    </div>
-                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div id="progressBar" class="bg-teal-600 h-2 transition-all duration-150" style="width: 0%"></div>
-                    </div>
-                </div>
+            <p class="text-xs text-slate-500 leading-relaxed">
+                Paste your Google Form <strong>Pre-filled Link</strong> (or full URL) below. The tool will automatically parse the Form ID and map all questions:
+            </p>
 
-                <button id="startBtn" onclick="runSubmissions()" class="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold rounded-xl shadow-lg shadow-teal-600/30 transition duration-200 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    Dispatch Automated Submissions
+            <div class="flex flex-col sm:flex-row gap-2">
+                <input id="formLinkInput" type="text" placeholder="https://docs.google.com/forms/d/e/.../viewform?entry.123=..." class="flex-1 px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                <button onclick="autoConnectForm()" class="w-full sm:w-auto px-5 py-2.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold rounded-xl text-xs transition shadow-sm">
+                    Link & Sync Survey
                 </button>
             </div>
+
+            <div class="flex flex-wrap items-center justify-between text-[11px] text-slate-400 pt-1">
+                <span id="linkedFormIdText">Form ID: <code class="text-slate-600">Not connected yet</code></span>
+                <button onclick="toggleModal('entryModal')" class="text-teal-600 font-bold hover:underline">Manual Entry ID Config</button>
+            </div>
         </div>
 
-        <!-- Right Panel: Sliders & Probability Distribution Controls -->
-        <div class="w-full lg:w-8/12 flex flex-col bg-slate-50 overflow-hidden max-h-[calc(100vh-73px)]">
-            
-            <!-- Quick Preset Selector Bar -->
-            <div class="bg-white px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <!-- STEP 2: Presets & Controls -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="w-6 h-6 rounded-full bg-teal-100 text-teal-800 font-bold text-xs flex items-center justify-center">2</span>
+                    <h2 class="text-sm font-bold text-slate-800">Presets & Weights</h2>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="applyPreset('pro_ai')" class="py-2.5 px-2 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 border border-emerald-200 rounded-xl text-center transition">
+                    <div class="text-base">🚀</div>
+                    <div class="text-[11px] font-bold text-emerald-900 leading-tight">Pro-AI</div>
+                </button>
+                <button onclick="applyPreset('balanced')" class="py-2.5 px-2 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 border border-teal-200 rounded-xl text-center transition">
+                    <div class="text-base">⚖️</div>
+                    <div class="text-[11px] font-bold text-teal-900 leading-tight">Balanced</div>
+                </button>
+                <button onclick="applyPreset('skeptical')" class="py-2.5 px-2 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 border border-rose-200 rounded-xl text-center transition">
+                    <div class="text-base">🛡️</div>
+                    <div class="text-[11px] font-bold text-rose-900 leading-tight">Safety-First</div>
+                </button>
+            </div>
+
+            <!-- Parameters Grid -->
+            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                 <div>
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 mr-2">Presets:</span>
-                    <div class="inline-flex p-1 bg-slate-100 rounded-xl space-x-1">
-                        <button onclick="applyPreset('pro_ai')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition hover:bg-white text-teal-800">🚀 Pro-AI Optimistic</button>
-                        <button onclick="applyPreset('balanced')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition hover:bg-white text-slate-700">⚖️ Balanced Realism</button>
-                        <button onclick="applyPreset('skeptical')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition hover:bg-white text-rose-800">🛡️ Skeptical / Safety-First</button>
-                    </div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Submissions Count</label>
+                    <input id="subCount" type="number" min="1" max="500" value="10" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-center focus:ring-teal-500">
                 </div>
-
-                <div class="text-xs text-slate-500 font-medium">
-                    Adjust weights below (<span class="font-bold text-teal-700">0%–100%</span>)
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Delay (ms)</label>
+                    <input id="subDelay" type="number" min="100" step="50" value="400" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-center focus:ring-teal-500">
                 </div>
             </div>
 
-            <!-- Section Navigation Tabs -->
-            <div class="bg-white border-b border-slate-200 px-6 flex space-x-6 overflow-x-auto text-xs font-medium text-slate-500">
-                <button onclick="switchTab('tab-demographics')" id="btn-tab-demographics" class="tab-btn active py-3 whitespace-nowrap">1. Consent & Demographics</button>
-                <button onclick="switchTab('tab-mv')" id="btn-tab-mv" class="tab-btn py-3 whitespace-nowrap">2. Mechanical Ventilation</button>
-                <button onclick="switchTab('tab-ai-exp')" id="btn-tab-ai-exp" class="tab-btn py-3 whitespace-nowrap">3. AI Experience</button>
-                <button onclick="switchTab('tab-support')" id="btn-tab-support" class="tab-btn py-3 whitespace-nowrap">4. Decision Support (Q16-Q23)</button>
-                <button onclick="switchTab('tab-priorities')" id="btn-tab-priorities" class="tab-btn py-3 whitespace-nowrap">5. Priorities & Governance (Q24-Q35)</button>
+            <label class="flex items-center space-x-2 text-xs font-semibold text-slate-700 cursor-pointer pt-1">
+                <input id="enforceConsent" type="checkbox" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500">
+                <span>Lock Q1 (Consent) to 100% "نعم | Yes"</span>
+            </label>
+        </div>
+
+        <!-- Section Navigation Tabs (Horizontal Scrollable for Mobile) -->
+        <div class="flex space-x-2 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs font-medium">
+            <button onclick="switchTab('tab-demographics')" id="btn-tab-demographics" class="tab-btn px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-teal-700 font-bold whitespace-nowrap shadow-sm">1. Demographics</button>
+            <button onclick="switchTab('tab-mv')" id="btn-tab-mv" class="tab-btn px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-slate-600 whitespace-nowrap shadow-sm">2. MV Practice</button>
+            <button onclick="switchTab('tab-ai-exp')" id="btn-tab-ai-exp" class="tab-btn px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-slate-600 whitespace-nowrap shadow-sm">3. AI Experience</button>
+            <button onclick="switchTab('tab-support')" id="btn-tab-support" class="tab-btn px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-slate-600 whitespace-nowrap shadow-sm">4. Decision Support</button>
+            <button onclick="switchTab('tab-priorities')" id="btn-tab-priorities" class="tab-btn px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-slate-600 whitespace-nowrap shadow-sm">5. Priorities & Governance</button>
+        </div>
+
+        <!-- Questions Dynamic Container -->
+        <div id="questionsContainer" class="space-y-3">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Console Log Box -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Execution Log</span>
+                <button onclick="clearLogs()" class="text-[11px] text-slate-400 hover:text-slate-600">Clear</button>
+            </div>
+            <div id="logConsole" class="w-full h-32 bg-slate-900 rounded-xl p-3 font-mono text-[11px] text-emerald-400 overflow-y-auto space-y-1">
+                <p class="text-slate-500">// Ready. Please paste your Google Form link in Step 1.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Sticky Bottom Execution Bar for Mobile -->
+    <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 z-40 shadow-xl">
+        <div class="max-w-4xl mx-auto space-y-2">
+            <!-- Progress Bar -->
+            <div id="progressBox" class="hidden space-y-1">
+                <div class="flex justify-between text-xs font-bold text-slate-700">
+                    <span id="progressStatus">Submitting...</span>
+                    <span id="progressPct">0%</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div id="progressBar" class="bg-teal-600 h-2 transition-all duration-150" style="width: 0%"></div>
+                </div>
             </div>
 
-            <!-- Dynamic Question Cards Canvas -->
-            <div class="flex-1 p-6 overflow-y-auto space-y-6" id="questionsContainer">
-                <!-- Dynamically injected via JavaScript -->
-            </div>
+            <button id="startBtn" onclick="runSubmissions()" class="w-full py-3 bg-teal-600 active:bg-teal-700 text-white font-bold rounded-xl shadow-lg shadow-teal-600/30 transition text-sm flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Start Auto-Submissions
+            </button>
         </div>
     </div>
 
-    <!-- Entry ID Inspection & Prefill Auto-Mapper Modal -->
+    <!-- Hidden Form and Iframe Fallback (Guarantees Google Form Acceptance) -->
+    <iframe name="hidden_submit_iframe" id="hidden_submit_iframe" class="hidden"></iframe>
+    <form id="submissionFallbackForm" method="POST" target="hidden_submit_iframe" class="hidden"></form>
+
+    <!-- Modal: Help & Instructions -->
+    <div id="helpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-sm">How to get your exact Google Form Link</h3>
+                <button onclick="toggleModal('helpModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+            </div>
+            <div class="text-xs text-slate-600 space-y-3 leading-relaxed">
+                <p>Google Forms needs the hidden internal numbers (<code>entry.XXXXX</code>) to actually register responses in the Google Sheet. Here is the easiest 30-second method to link them:</p>
+                <ol class="list-decimal pl-5 space-y-2">
+                    <li>Open your Google Form in edit mode.</li>
+                    <li>Click the <strong>three dots (⋮)</strong> at the top right of Google Forms.</li>
+                    <li>Click <strong>"Get pre-filled link"</strong> (الحصول على الرابط الذي تم ملؤه مسبقًا).</li>
+                    <li>Choose any random answer for the questions, then scroll to the bottom and click <strong>"Get link"</strong> (الحصول على الرابط).</li>
+                    <li>Click <strong>"Copy link"</strong>.</li>
+                    <li>Paste that copied link into <strong>Step 1</strong> on this dashboard and tap <strong>Link & Sync Survey</strong>!</li>
+                </ol>
+            </div>
+            <button onclick="toggleModal('helpModal')" class="w-full py-2.5 bg-teal-600 text-white font-bold rounded-xl text-xs">Got it!</button>
+        </div>
+    </div>
+
+    <!-- Modal: Manual Entry ID Editor -->
     <div id="entryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
-            <div class="flex items-center justify-between border-b pb-3">
-                <h3 class="text-base font-bold text-slate-800">Google Form Entry ID Configuration</h3>
-                <button onclick="toggleModal('entryModal')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 space-y-3 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm">Active Entry IDs</h3>
+                <button onclick="toggleModal('entryModal')" class="text-slate-400 text-xl font-bold">&times;</button>
             </div>
-
-            <div class="text-xs text-slate-600 space-y-2">
-                <p>Google Forms uses internal identifiers formatted as <code>entry.123456789</code> for each response question. You can paste a <strong>"Get prefilled link"</strong> URL from Google Forms below to auto-map all question IDs automatically:</p>
-                <div class="flex gap-2">
-                    <input id="prefillInput" type="text" placeholder="https://docs.google.com/forms/d/e/.../viewform?entry.123=Test..." class="flex-1 px-3 py-2 border rounded-lg text-xs font-mono focus:ring-teal-500">
-                    <button onclick="parsePrefillUrl()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-bold text-xs">Auto-Map</button>
-                </div>
+            <div class="flex-1 overflow-y-auto border rounded-xl p-2 bg-slate-50 space-y-2">
+                <div id="entryListContainer" class="space-y-2 text-xs"></div>
             </div>
-
-            <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl p-3 bg-slate-50">
-                <table class="w-full text-left text-xs">
-                    <thead>
-                        <tr class="border-b text-slate-500">
-                            <th class="py-1">Q#</th>
-                            <th class="py-1">Question Title</th>
-                            <th class="py-1">Google Form Entry Key</th>
-                        </tr>
-                    </thead>
-                    <tbody id="entryIdTableBody" class="divide-y divide-slate-200">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2 border-t">
-                <button onclick="toggleModal('entryModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold">Close</button>
-            </div>
+            <button onclick="toggleModal('entryModal')" class="w-full py-2 bg-slate-200 text-slate-700 font-bold rounded-xl text-xs">Done</button>
         </div>
     </div>
 
-    <!-- Script Application Logic -->
     <script>
-        // Exact survey structure compiled from all pages of the AI-Ventilation study
+        // Exact questions from the 7-page survey
         const surveyQuestions = [
-            // PAGE 1: Consent
-            { 
-                section: "tab-demographics", id: "q1_consent", label: "Q1 — Do you agree to participate in this study? هل توافق على المشاركة في هذه الدراسة؟",
-                entryId: "entry.100000001", isCheckbox: false,
-                options: ["نعم | Yes", "لا | No"],
-                weights: { pro_ai: [100, 0], balanced: [100, 0], skeptical: [100, 0] }
-            },
-            // PAGE 2: Demographics
-            { 
-                section: "tab-demographics", id: "q_gender", label: "Demographics — What is your gender? ما جنسك؟",
-                entryId: "entry.100000002", isCheckbox: false,
-                options: ["Male / ذكر", "Female / أنثى"],
-                weights: { pro_ai: [55, 45], balanced: [50, 50], skeptical: [48, 52] }
-            },
-            // PAGE 3: Profession
-            { 
-                section: "tab-demographics", id: "q2_profession", label: "Q2 — What is your profession? ما مهنتك؟",
-                entryId: "entry.100000003", isCheckbox: false,
-                options: [
-                    "Respiratory Therapist | أخصائي علاج تنفسي",
-                    "Respiratory Therapy Intern | امتياز علاج تنفسي",
-                    "Physician | طبيب",
-                    "Other | أخرى"
-                ],
-                weights: { pro_ai: [45, 15, 35, 5], balanced: [40, 20, 35, 5], skeptical: [35, 15, 45, 5] }
-            },
-            { 
-                section: "tab-demographics", id: "q3_specialty", label: "Q3 — Physician specialty (physicians only; non-physicians please skip this question) تخصص الطبيب",
-                entryId: "entry.100000004", isCheckbox: false,
-                options: [
-                    "Pulmonology | الأمراض الصدرية",
-                    "Critical Care | العناية المركزة",
-                    "Emergency Medicine | طب الطوارئ",
-                    "Anaesthesia | التخدير",
-                    "Sleep Medicine | طب النوم",
-                    "Other | أخرى",
-                    "Not Applicaple- لا ينطبق"
-                ],
-                weights: { pro_ai: [20, 30, 20, 15, 5, 5, 5], balanced: [15, 25, 20, 15, 5, 5, 15], skeptical: [15, 20, 15, 10, 5, 5, 30] }
-            },
-            // PAGE 4: Experience
-            { 
-                section: "tab-demographics", id: "q4_exp", label: "Q4 — Years of clinical experience عدد سنوات الخبرة السريرية",
-                entryId: "entry.100000005", isCheckbox: false,
-                options: ["Less than 1 year | أقل من سنة", "1–3 years | 1–3 سنوات", "4–7 years | 4–7 سنوات", "8–10 years | 8–10 سنوات", "More than 10 years | أكثر من 10 سنوات"],
-                weights: { pro_ai: [15, 35, 25, 15, 10], balanced: [10, 30, 30, 18, 12], skeptical: [8, 20, 25, 25, 22] }
-            },
-            // PAGE 5: Clinical Areas (Checkbox)
-            { 
-                section: "tab-demographics", id: "q5_areas", label: "Q5 — Which clinical areas do you currently work in or rotate through? (Select all that apply) ما الأقسام السريرية؟",
-                entryId: "entry.100000006", isCheckbox: true,
-                options: [
-                    "Adult ICU | العناية المركزة للبالغين",
-                    "PICU | العناية المركزة للأطفال",
-                    "NICU | العناية المركزة لحديثي الولادة",
-                    "CCU / Cardiac ICU | العناية القلبية المركزة",
-                    "Emergency Department | قسم الطوارئ",
-                    "Respiratory Ward | الجناح التنفسي",
-                    "Operating Room | غرفة العمليات",
-                    "Sleep Unit | وحدة النوم",
-                    "Other | أخرى"
-                ],
-                weights: { pro_ai: [75, 30, 25, 40, 55, 35, 25, 15, 8], balanced: [70, 25, 20, 35, 50, 40, 20, 10, 10], skeptical: [65, 20, 20, 30, 45, 30, 15, 10, 5] }
-            },
-            // PAGE 6: Region
-            { 
-                section: "tab-demographics", id: "q6_region", label: "Q6 — Region of practice منطقة الممارسة",
-                entryId: "entry.100000007", isCheckbox: false,
-                options: ["Central | الوسطى", "Western | الغربية", "Eastern | الشرقية", "Southern | الجنوبية", "Northern | الشمالية"],
-                weights: { pro_ai: [35, 25, 20, 12, 8], balanced: [30, 30, 20, 10, 10], skeptical: [32, 28, 22, 10, 8] }
-            },
+            // Consent
+            { section: "tab-demographics", id: "q1_consent", label: "Q1 — Consent هل توافق على المشاركة؟", entryId: "", options: ["نعم | Yes", "لا | No"], weights: { pro_ai: [100, 0], balanced: [100, 0], skeptical: [100, 0] } },
+            // Demographics
+            { section: "tab-demographics", id: "q_gender", label: "Demographics — Gender ما جنسك؟", entryId: "", options: ["Male / ذكر", "Female / أنثى"], weights: { pro_ai: [55, 45], balanced: [50, 50], skeptical: [48, 52] } },
+            { section: "tab-demographics", id: "q2_profession", label: "Q2 — Profession ما مهنتك؟", entryId: "", options: ["Respiratory Therapist | أخصائي علاج تنفسي", "Respiratory Therapy Intern | امتياز علاج تنفسي", "Physician | طبيب", "Other | أخرى"], weights: { pro_ai: [45, 15, 35, 5], balanced: [40, 20, 35, 5], skeptical: [35, 15, 45, 5] } },
+            { section: "tab-demographics", id: "q3_specialty", label: "Q3 — Physician specialty تخصص الطبيب", entryId: "", options: ["Pulmonology | الأمراض الصدرية", "Critical Care | العناية المركزة", "Emergency Medicine | طب الطوارئ", "Anaesthesia | التخدير", "Sleep Medicine | طب النوم", "Other | أخرى", "Not Applicaple- لا ينطبق"], weights: { pro_ai: [20, 30, 20, 15, 5, 5, 5], balanced: [15, 25, 20, 15, 5, 5, 15], skeptical: [15, 20, 15, 10, 5, 5, 30] } },
+            { section: "tab-demographics", id: "q4_exp", label: "Q4 — Clinical experience عدد سنوات الخبرة", entryId: "", options: ["Less than 1 year | أقل من سنة", "1–3 years | 1–3 سنوات", "4–7 years | 4–7 سنوات", "8–10 years | 8–10 سنوات", "More than 10 years | أكثر من 10 سنوات"], weights: { pro_ai: [15, 35, 25, 15, 10], balanced: [10, 30, 30, 18, 12], skeptical: [8, 20, 25, 25, 22] } },
+            { section: "tab-demographics", id: "q5_areas", label: "Q5 — Clinical areas الأقسام السريرية", isCheckbox: true, entryId: "", options: ["Adult ICU | العناية المركزة للبالغين", "PICU | العناية المركزة للأطفال", "NICU | العناية المركزة لحديثي الولادة", "CCU / Cardiac ICU | العناية القلبية المركزة", "Emergency Department | قسم الطوارئ", "Respiratory Ward | الجناح التنفسي", "Operating Room | غرفة العمليات", "Sleep Unit | وحدة النوم", "Other | أخرى"], weights: { pro_ai: [75, 30, 25, 40, 55, 35, 25, 15, 8], balanced: [70, 25, 20, 35, 50, 40, 20, 10, 10], skeptical: [65, 20, 20, 30, 45, 30, 15, 10, 5] } },
+            { section: "tab-demographics", id: "q6_region", label: "Q6 — Region of practice منطقة الممارسة", entryId: "", options: ["Central | الوسطى", "Western | الغربية", "Eastern | الشرقية", "Southern | الجنوبية", "Northern | الشمالية"], weights: { pro_ai: [35, 25, 20, 12, 8], balanced: [30, 30, 20, 10, 10], skeptical: [32, 28, 22, 10, 8] } },
 
-            // PAGE 8: Mechanical Ventilation Experience
-            { 
-                section: "tab-mv", id: "q7_mv_type", label: "Q7 — Which type of mechanical ventilation do you commonly manage? نوع التهوية",
-                entryId: "entry.100000008", isCheckbox: false,
-                options: [
-                    "Non-invasive ventilation (NIV; mask-based) | التهوية غير الغازية (NIV؛ عبر القناع)",
-                    "Invasive mechanical ventilation (via an endotracheal or tracheostomy tube) | التهوية الميكانيكية عبر أنبوب التنفس",
-                    "Both | كلاهما"
-                ],
-                weights: { pro_ai: [15, 15, 70], balanced: [20, 20, 60], skeptical: [25, 25, 50] }
-            },
-            { 
-                section: "tab-mv", id: "q8_frequency", label: "Q8 — How frequently do you manage mechanical ventilation? كم مرة تتعامل مع التهوية الميكانيكية؟",
-                entryId: "entry.100000009", isCheckbox: false,
-                options: ["Daily | يوميًا", "Weekly | أسبوعيًا", "Occasionally | أحيانًا", "Rarely | نادرًا"],
-                weights: { pro_ai: [70, 20, 8, 2], balanced: [60, 25, 10, 5], skeptical: [50, 30, 15, 5] }
-            },
-            { 
-                section: "tab-mv", id: "q9_confidence", label: "Q9 — I feel confident participating in mechanical ventilation setting adjustments أشعر بالثقة عند تعديل الإعدادات",
-                entryId: "entry.100000010", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [2, 5, 15, 45, 33], balanced: [4, 8, 25, 43, 20], skeptical: [8, 15, 35, 30, 12] }
-            },
-            { 
-                section: "tab-mv", id: "q10_asynchrony", label: "Q10 — How often do you encounter patient–ventilator asynchrony? كم مرة تواجه عدم التزامن؟",
-                entryId: "entry.100000011", isCheckbox: false,
-                options: ["Rarely | نادرًا", "Sometimes | أحيانًا", "Often | غالبًا", "Very often | غالبًا جدًا", "Not sure | غير متأكد"],
-                weights: { pro_ai: [5, 35, 40, 18, 2], balanced: [8, 40, 35, 12, 5], skeptical: [10, 45, 30, 10, 5] }
-            },
-            { 
-                section: "tab-mv", id: "q11_difficulty", label: "Q11 — How often do you find it difficult to identify and resolve mechanical ventilation problems? صعوبة تحديد المشكلات",
-                entryId: "entry.100000012", isCheckbox: false,
-                options: ["Never | أبدًا", "Rarely | نادرًا", "Sometimes | أحيانًا", "Often | غالبًا", "Very often | غالبًا جدًا"],
-                weights: { pro_ai: [15, 45, 32, 7, 1], balanced: [8, 40, 42, 8, 2], skeptical: [5, 30, 48, 14, 3] }
-            },
-            { 
-                section: "tab-mv", id: "q12_safety_event", label: "Q12 — Have you experienced or witnessed a mechanical ventilation problem that could have affected patient safety? مشكلة أثرت على سلامة المريض",
-                entryId: "entry.100000013", isCheckbox: false,
-                options: ["Yes | نعم", "No | لا", "Prefer not to answer | أفضل عدم الإجابة"],
-                weights: { pro_ai: [55, 40, 5], balanced: [60, 32, 8], skeptical: [65, 25, 10] }
-            },
+            // MV Practice
+            { section: "tab-mv", id: "q7_mv_type", label: "Q7 — Ventilation type نوع التهوية", entryId: "", options: ["Non-invasive ventilation (NIV; mask-based) | التهوية غير الغازية (NIV؛ عبر القناع)", "Invasive mechanical ventilation (via an endotracheal or tracheostomy tube) | التهوية الميكانيكية عبر أنبوب التنفس", "Both | كلاهما"], weights: { pro_ai: [15, 15, 70], balanced: [20, 20, 60], skeptical: [25, 25, 50] } },
+            { section: "tab-mv", id: "q8_frequency", label: "Q8 — Management frequency كم مرة تتعامل معها؟", entryId: "", options: ["Daily | يوميًا", "Weekly | أسبوعيًا", "Occasionally | أحيانًا", "Rarely | نادرًا"], weights: { pro_ai: [70, 20, 8, 2], balanced: [60, 25, 10, 5], skeptical: [50, 30, 15, 5] } },
+            { section: "tab-mv", id: "q9_confidence", label: "Q9 — Confident adjusting settings أشعر بالثقة", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [2, 5, 15, 45, 33], balanced: [4, 8, 25, 43, 20], skeptical: [8, 15, 35, 30, 12] } },
+            { section: "tab-mv", id: "q10_asynchrony", label: "Q10 — Encountering asynchrony عدم التزامن", entryId: "", options: ["Rarely | نادرًا", "Sometimes | أحيانًا", "Often | غالبًا", "Very often | غالبًا جدًا", "Not sure | غير متأكد"], weights: { pro_ai: [5, 35, 40, 18, 2], balanced: [8, 40, 35, 12, 5], skeptical: [10, 45, 30, 10, 5] } },
+            { section: "tab-mv", id: "q11_difficulty", label: "Q11 — Difficulty solving problems صعوبة تحديد المشكلات", entryId: "", options: ["Never | أبدًا", "Rarely | نادرًا", "Sometimes | أحيانًا", "Often | غالبًا", "Very often | غالبًا جدًا"], weights: { pro_ai: [15, 45, 32, 7, 1], balanced: [8, 40, 42, 8, 2], skeptical: [5, 30, 48, 14, 3] } },
+            { section: "tab-mv", id: "q12_safety_event", label: "Q12 — Witnessed problem affecting safety حدث أثر على السلامة", entryId: "", options: ["Yes | نعم", "No | لا", "Prefer not to answer | أفضل عدم الإجابة"], weights: { pro_ai: [55, 40, 5], balanced: [60, 32, 8], skeptical: [65, 25, 10] } },
 
-            // PAGE 13 & 14: AI Experience
-            { 
-                section: "tab-ai-exp", id: "q13_ai_usage", label: "Q13 — Have you used AI tools such as ChatGPT, Gemini, Copilot? هل سبق أن استخدمت أدوات الذكاء الاصطناعي؟",
-                entryId: "entry.100000014", isCheckbox: false,
-                options: ["Yes | نعم", "No | لا"],
-                weights: { pro_ai: [90, 10], balanced: [75, 25], skeptical: [55, 45] }
-            },
-            { 
-                section: "tab-ai-exp", id: "q14_ai_purpose", label: "Q14 — If yes, what have you used AI for? (Select all that apply) في ماذا استخدمت الذكاء الاصطناعي؟",
-                entryId: "entry.100000015", isCheckbox: true,
-                options: [
-                    "Learning | التعلم",
-                    "Clinical decision support | دعم القرار السريري",
-                    "Clinical information | الحصول على معلومات سريرية",
-                    "Education | التعليم",
-                    "Research | البحث العلمي",
-                    "Other | أخرى"
-                ],
-                weights: { pro_ai: [80, 45, 65, 70, 75, 15], balanced: [70, 30, 55, 60, 65, 10], skeptical: [55, 15, 40, 45, 50, 8] }
-            },
-            { 
-                section: "tab-ai-exp", id: "q15_ai_training", label: "Q15 — Have you previously received any formal training on AI in healthcare? التدريب السابق على الذكاء الاصطناعي",
-                entryId: "entry.100000016", isCheckbox: false,
-                options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"],
-                weights: { pro_ai: [35, 55, 10], balanced: [20, 70, 10], skeptical: [10, 80, 10] }
-            },
+            // AI Experience
+            { section: "tab-ai-exp", id: "q13_ai_usage", label: "Q13 — Used AI tools (ChatGPT, etc.) استخدام أدوات الذكاء الاصطناعي", entryId: "", options: ["Yes | نعم", "No | لا"], weights: { pro_ai: [90, 10], balanced: [75, 25], skeptical: [55, 45] } },
+            { section: "tab-ai-exp", id: "q14_ai_purpose", label: "Q14 — What have you used AI for? أغراض الاستخدام", isCheckbox: true, entryId: "", options: ["Learning | التعلم", "Clinical decision support | دعم القرار السريري", "Clinical information | الحصول على معلومات سريرية", "Education | التعليم", "Research | البحث العلمي", "Other | أخرى"], weights: { pro_ai: [80, 45, 65, 70, 75, 15], balanced: [70, 30, 55, 60, 65, 10], skeptical: [55, 15, 40, 45, 50, 8] } },
+            { section: "tab-ai-exp", id: "q15_ai_training", label: "Q15 — Previous AI training تدريب سابق على الذكاء الاصطناعي", entryId: "", options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"], weights: { pro_ai: [35, 55, 10], balanced: [20, 70, 10], skeptical: [10, 80, 10] } },
 
-            // PAGE 17 - 21: Likert 1-5 Decision Support (Q16 - Q23)
-            { 
-                section: "tab-support", id: "q16_ai_support", label: "Q16 — AI can support clinical decision-making during mechanical ventilation دعم اتخاذ القرار السريري",
-                entryId: "entry.100000017", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 2, 8, 47, 42], balanced: [2, 5, 22, 50, 21], skeptical: [10, 20, 38, 24, 8] }
-            },
-            { 
-                section: "tab-support", id: "q17_mode_setting", label: "Q17 — AI could assist clinicians in selecting appropriate modes and settings مساعدة في اختيار المودات والإعدادات",
-                entryId: "entry.100000018", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 3, 10, 46, 40], balanced: [3, 7, 24, 46, 20], skeptical: [12, 22, 35, 23, 8] }
-            },
-            { 
-                section: "tab-support", id: "q18_reduce_errors", label: "Q18 — AI can reduce clinical errors during mechanical ventilation تقليل الأخطاء السريرية",
-                entryId: "entry.100000019", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 2, 12, 45, 40], balanced: [2, 8, 25, 45, 20], skeptical: [10, 25, 35, 22, 8] }
-            },
-            { 
-                section: "tab-support", id: "q19_readiness", label: "Q19 — I feel ready to use AI-supported tools in mechanical ventilation practice الجاهزية لاستخدام أدوات مدعومة بالذكاء الاصطناعي",
-                entryId: "entry.100000020", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [2, 5, 15, 45, 33], balanced: [5, 12, 28, 40, 15], skeptical: [15, 30, 35, 15, 5] }
-            },
-            { 
-                section: "tab-support", id: "q20_troubleshooting", label: "Q20 — AI can improve troubleshooting during mechanical ventilation تحسين التعامل مع المشكلات",
-                entryId: "entry.100000021", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 3, 10, 48, 38], balanced: [2, 6, 22, 48, 22], skeptical: [8, 20, 37, 25, 10] }
-            },
-            { 
-                section: "tab-support", id: "q21_patient_safety", label: "Q21 — AI may improve patient safety during mechanical ventilation تحسين سلامة المرضى",
-                entryId: "entry.100000022", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 2, 11, 46, 40], balanced: [3, 7, 24, 46, 20], skeptical: [10, 22, 38, 22, 8] }
-            },
-            { 
-                section: "tab-support", id: "q22_waveform", label: "Q22 — AI-assisted ventilator waveform analysis could support faster clinical decisions تحليل موجات الجهاز أسرع",
-                entryId: "entry.100000023", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 2, 9, 48, 40], balanced: [2, 6, 20, 50, 22], skeptical: [8, 18, 36, 28, 10] }
-            },
-            { 
-                section: "tab-support", id: "q23_early_abnormal", label: "Q23 — AI tools could detect abnormal ventilator patterns earlier اكتشاف الأنماط غير الطبيعية مبكرًا",
-                entryId: "entry.100000024", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 2, 8, 44, 45], balanced: [2, 5, 20, 48, 25], skeptical: [7, 16, 35, 30, 12] }
-            },
+            // Decision Support Likert (Q16 - Q23)
+            { section: "tab-support", id: "q16_ai_support", label: "Q16 — AI support decision-making دعم اتخاذ القرار", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 2, 8, 47, 42], balanced: [2, 5, 22, 50, 21], skeptical: [10, 20, 38, 24, 8] } },
+            { section: "tab-support", id: "q17_mode_setting", label: "Q17 — Assist in selecting modes/settings اختيار المودات", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 3, 10, 46, 40], balanced: [3, 7, 24, 46, 20], skeptical: [12, 22, 35, 23, 8] } },
+            { section: "tab-support", id: "q18_reduce_errors", label: "Q18 — Reduce clinical errors تقليل الأخطاء", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 2, 12, 45, 40], balanced: [2, 8, 25, 45, 20], skeptical: [10, 25, 35, 22, 8] } },
+            { section: "tab-support", id: "q19_readiness", label: "Q19 — Ready to use AI tools الجاهزية للاستخدام", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [2, 5, 15, 45, 33], balanced: [5, 12, 28, 40, 15], skeptical: [15, 30, 35, 15, 5] } },
+            { section: "tab-support", id: "q20_troubleshooting", label: "Q20 — Improve troubleshooting تحسين التعامل مع المشكلات", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 3, 10, 48, 38], balanced: [2, 6, 22, 48, 22], skeptical: [8, 20, 37, 25, 10] } },
+            { section: "tab-support", id: "q21_patient_safety", label: "Q21 — Improve patient safety تحسين سلامة المرضى", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 2, 11, 46, 40], balanced: [3, 7, 24, 46, 20], skeptical: [10, 22, 38, 22, 8] } },
+            { section: "tab-support", id: "q22_waveform", label: "Q22 — Faster decisions via waveform analysis تحليل الموجات", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 2, 9, 48, 40], balanced: [2, 6, 20, 50, 22], skeptical: [8, 18, 36, 28, 10] } },
+            { section: "tab-support", id: "q23_early_abnormal", label: "Q23 — Earlier pattern detection اكتشاف الأنماط مبكرًا", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 2, 8, 44, 45], balanced: [2, 5, 20, 48, 25], skeptical: [7, 16, 35, 30, 12] } },
 
-            // PAGE 23: Clinical Priorities (Checkbox, up to three)
-            { 
-                section: "tab-priorities", id: "q24_priorities", label: "Q24 — Which three mechanical ventilation tasks should an AI tool support first? (Choose up to 3) أولويات المهام",
-                entryId: "entry.100000025", isCheckbox: true, maxSelect: 3,
-                options: [
-                    "Patient–ventilator asynchrony | عدم التزامن بين المريض والجهاز",
-                    "High airway pressure | ارتفاع ضغط مجرى الهواء",
-                    "Oxygenation problems | مشكلات الأكسجة",
-                    "NIV failure | فشل التهوية غير الغازية",
-                    "Weaning readiness | الاستعداد للفطام من جهاز التنفس الصناعي",
-                    "Alarm troubleshooting | التعامل مع إنذارات جهاز التنفس",
-                    "Other | أخرى"
-                ],
-                weights: { pro_ai: [75, 50, 45, 35, 60, 40, 5], balanced: [65, 55, 40, 40, 55, 45, 5], skeptical: [50, 60, 45, 35, 45, 60, 5] }
-            },
-
-            // PAGE 26 - 33: Governance & Implementation
-            { 
-                section: "tab-priorities", id: "q25_inst_policy", label: "Q25 — Does your department have an approved policy/protocol governing AI use? سياسة أو بروتوكول معتمد للذكاء الاصطناعي",
-                entryId: "entry.100000026", isCheckbox: false,
-                options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"],
-                weights: { pro_ai: [20, 60, 20], balanced: [12, 70, 18], skeptical: [8, 75, 17] }
-            },
-            { 
-                section: "tab-priorities", id: "q26_clinical_valid", label: "Q26 — AI-based tools should be clinically validated before implementation التحقق السريري الإلزامي",
-                entryId: "entry.100000027", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 2, 5, 28, 64], balanced: [1, 2, 8, 30, 59], skeptical: [0, 1, 4, 25, 70] }
-            },
-            { 
-                section: "tab-priorities", id: "q27_support_piloting", label: "Q27 — If clinically validated, would you support piloting an AI-assisted protocol? تأييد تجربة بروتوكول الذكاء الاصطناعي",
-                entryId: "entry.100000028", isCheckbox: false,
-                options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"],
-                weights: { pro_ai: [88, 4, 8], balanced: [75, 8, 17], skeptical: [50, 22, 28] }
-            },
-            { 
-                section: "tab-priorities", id: "q28_integrated_ventilator", label: "Q28 — Willingness to use validated AI integrated into a ventilator? الاستعداد للاستخدام في الممارسة السريرية",
-                entryId: "entry.100000029", isCheckbox: false,
-                options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"],
-                weights: { pro_ai: [85, 4, 11], balanced: [72, 9, 19], skeptical: [48, 25, 27] }
-            },
-            { 
-                section: "tab-priorities", id: "q29_alert_recipient", label: "Q29 — Who should receive an AI-generated ventilation alert first? من يتلقى تنبيه التهوية أولًا؟",
-                entryId: "entry.100000030", isCheckbox: false,
-                options: [
-                    "Respiratory Therapist | أخصائي العلاج التنفسي",
-                    "Physician | الطبيب",
-                    "Both simultaneously | كلاهما في الوقت نفسه",
-                    "Depends on alert severity | يعتمد على شدة التنبيه"
-                ],
-                weights: { pro_ai: [30, 15, 35, 20], balanced: [28, 18, 34, 20], skeptical: [25, 20, 30, 25] }
-            },
-            { 
-                section: "tab-priorities", id: "q30_accompanying_info", label: "Q30 — What information should accompany an AI recommendation? (Select all that apply) المعلومات المصاحبة للتوصية",
-                entryId: "entry.100000031", isCheckbox: true,
-                options: [
-                    "Patient clinical trend | تغير حالة المريض",
-                    "Ventilator waveform | موجات جهاز التنفس",
-                    "Reason for the alert | سبب التنبيه",
-                    "Suggested action | الإجراء المقترح",
-                    "Degree of uncertainty | درجة عدم اليقين",
-                    "Time generated | وقت إصدار التنبيه"
-                ],
-                weights: { pro_ai: [80, 75, 85, 80, 65, 70], balanced: [75, 70, 80, 75, 60, 65], skeptical: [70, 65, 80, 65, 75, 60] }
-            },
-            { 
-                section: "tab-priorities", id: "q31_escalation_pathway", label: "Q31 — AI alerts should be linked to predefined clinical actions and response times ربط التنبيهات بمسارات تصعيد",
-                entryId: "entry.100000032", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 2, 7, 45, 45], balanced: [1, 3, 15, 47, 34], skeptical: [2, 6, 20, 44, 28] }
-            },
-            { 
-                section: "tab-priorities", id: "q32_dismissal_training", label: "Q32 — Training should explain when an alert requires action vs dismissed based on assessment توضيح متى يتطلب التنبيه إجراء",
-                entryId: "entry.100000033", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [0, 1, 6, 40, 53], balanced: [1, 2, 10, 44, 43], skeptical: [1, 3, 14, 42, 40] }
-            },
-            { 
-                section: "tab-priorities", id: "q33_concerns", label: "Q33 — What are your main concerns regarding AI in mechanical ventilation? (Select all that apply) أبرز المخاوف",
-                entryId: "entry.100000034", isCheckbox: true,
-                options: [
-                    "Incorrect recommendations | توصيات غير صحيحة",
-                    "Delayed detection | تأخر الاكتشاف",
-                    "Over-reliance on AI | الاعتماد الزائد على الذكاء الاصطناعي",
-                    "Lack of clinical validation | عدم التحقق السريري",
-                    "Legal responsibility | المسؤولية القانونية",
-                    "Data privacy | خصوصية البيانات",
-                    "Technical failure | الفشل التقني",
-                    "False-positive alerts | الإنذارات الكاذبة"
-                ],
-                weights: { pro_ai: [45, 30, 45, 40, 50, 35, 45, 40], balanced: [55, 40, 60, 55, 60, 45, 55, 50], skeptical: [75, 55, 75, 70, 75, 60, 70, 65] }
-            },
-            { 
-                section: "tab-priorities", id: "q34_digital_readiness", label: "Q34 — Does your unit currently have digital readiness to support future AI integration? الجاهزية الرقمية للقسم",
-                entryId: "entry.100000035", isCheckbox: false,
-                options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"],
-                weights: { pro_ai: [55, 25, 20], balanced: [40, 35, 25], skeptical: [25, 50, 25] }
-            },
-            { 
-                section: "tab-priorities", id: "q35a_training_confidence", label: "Q35a — Formal training on AI tools would improve my confidence التدريب الرسمي يحسن الثقة",
-                entryId: "entry.100000036", isCheckbox: false,
-                options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"],
-                weights: { pro_ai: [1, 2, 7, 42, 48], balanced: [1, 3, 15, 48, 33], skeptical: [3, 8, 22, 42, 25] }
-            },
-            { 
-                section: "tab-priorities", id: "q35b_final_decision_maker", label: "Q35b — Who usually makes the final decision about changes to mechanical ventilation? من يتخذ القرار النهائي؟",
-                entryId: "entry.100000037", isCheckbox: false,
-                options: [
-                    "Physician | الطبيب",
-                    "Respiratory Therapist | أخصائي العلاج التنفسي",
-                    "Shared decision | قرار مشترك",
-                    "Varies by type of decision | يختلف حسب نوع القرار"
-                ],
-                weights: { pro_ai: [35, 25, 30, 10], balanced: [40, 20, 30, 10], skeptical: [45, 15, 25, 15] }
-            }
+            // Priorities & Governance
+            { section: "tab-priorities", id: "q24_priorities", label: "Q24 — Top 3 tasks for AI أولويات مهام الذكاء الاصطناعي", isCheckbox: true, maxSelect: 3, entryId: "", options: ["Patient–ventilator asynchrony | عدم التزامن بين المريض والجهاز", "High airway pressure | ارتفاع ضغط مجرى الهواء", "Oxygenation problems | مشكلات الأكسجة", "NIV failure | فشل التهوية غير الغازية", "Weaning readiness | الاستعداد للفطام من جهاز التنفس الصناعي", "Alarm troubleshooting | التعامل مع إنذارات جهاز التنفس", "Other | أخرى"], weights: { pro_ai: [75, 50, 45, 35, 60, 40, 5], balanced: [65, 55, 40, 40, 55, 45, 5], skeptical: [50, 60, 45, 35, 45, 60, 5] } },
+            { section: "tab-priorities", id: "q25_inst_policy", label: "Q25 — Department has AI policy بروتوكول معتمد في القسم", entryId: "", options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"], weights: { pro_ai: [20, 60, 20], balanced: [12, 70, 18], skeptical: [8, 75, 17] } },
+            { section: "tab-priorities", id: "q26_clinical_valid", label: "Q26 — Clinically validated before use التحقق السريري الإلزامي", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 2, 5, 28, 64], balanced: [1, 2, 8, 30, 59], skeptical: [0, 1, 4, 25, 70] } },
+            { section: "tab-priorities", id: "q27_support_piloting", label: "Q27 — Support piloting protocol تأييد تجربة بروتوكول", entryId: "", options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"], weights: { pro_ai: [88, 4, 8], balanced: [75, 8, 17], skeptical: [50, 22, 28] } },
+            { section: "tab-priorities", id: "q28_integrated_ventilator", label: "Q28 — Willing to use integrated in ventilator الاستعداد للاستخدام", entryId: "", options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"], weights: { pro_ai: [85, 4, 11], balanced: [72, 9, 19], skeptical: [48, 25, 27] } },
+            { section: "tab-priorities", id: "q29_alert_recipient", label: "Q29 — Who receives alert first? من يتلقى التنبيه أولًا؟", entryId: "", options: ["Respiratory Therapist | أخصائي العلاج التنفسي", "Physician | الطبيب", "Both simultaneously | كلاهما في الوقت نفسه", "Depends on alert severity | يعتمد على شدة التنبيه"], weights: { pro_ai: [30, 15, 35, 20], balanced: [28, 18, 34, 20], skeptical: [25, 20, 30, 25] } },
+            { section: "tab-priorities", id: "q30_accompanying_info", label: "Q30 — Accompanying information المعلومات المصاحبة للتوصية", isCheckbox: true, entryId: "", options: ["Patient clinical trend | تغير حالة المريض", "Ventilator waveform | موجات جهاز التنفس", "Reason for the alert | سبب التنبيه", "Suggested action | الإجراء المقترح", "Degree of uncertainty | درجة عدم اليقين", "Time generated | وقت إصدار التنبيه"], weights: { pro_ai: [80, 75, 85, 80, 65, 70], balanced: [75, 70, 80, 75, 60, 65], skeptical: [70, 65, 80, 65, 75, 60] } },
+            { section: "tab-priorities", id: "q31_escalation_pathway", label: "Q31 — Linked to escalation pathways ربط التنبيهات بمسارات تصعيد", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 2, 7, 45, 45], balanced: [1, 3, 15, 47, 34], skeptical: [2, 6, 20, 44, 28] } },
+            { section: "tab-priorities", id: "q32_dismissal_training", label: "Q32 — Training explains action vs dismiss توضيح متى يستبعد التنبيه", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [0, 1, 6, 40, 53], balanced: [1, 2, 10, 44, 43], skeptical: [1, 3, 14, 42, 40] } },
+            { section: "tab-priorities", id: "q33_concerns", label: "Q33 — Main concerns أبرز المخاوف", isCheckbox: true, entryId: "", options: ["Incorrect recommendations | توصيات غير صحيحة", "Delayed detection | تأخر الاكتشاف", "Over-reliance on AI | الاعتماد الزائد على الذكاء الاصطناعي", "Lack of clinical validation | عدم التحقق السريري", "Legal responsibility | المسؤولية القانونية", "Data privacy | خصوصية البيانات", "Technical failure | الفشل التقني", "False-positive alerts | الإنذارات الكاذبة"], weights: { pro_ai: [45, 30, 45, 40, 50, 35, 45, 40], balanced: [55, 40, 60, 55, 60, 45, 55, 50], skeptical: [75, 55, 75, 70, 75, 60, 70, 65] } },
+            { section: "tab-priorities", id: "q34_digital_readiness", label: "Q34 — Digital readiness الجاهزية الرقمية", entryId: "", options: ["Yes | نعم", "No | لا", "Not sure | غير متأكد"], weights: { pro_ai: [55, 25, 20], balanced: [40, 35, 25], skeptical: [25, 50, 25] } },
+            { section: "tab-priorities", id: "q35a_training_confidence", label: "Q35a — Training improves confidence التدريب الرسمي يحسن الثقة", entryId: "", options: ["1 – Strongly disagree | لا أوافق بشدة", "2 – Disagree | لا أوافق", "3 – Neutral | محايد", "4 – Agree | أوافق", "5 – Strongly agree | أوافق بشدة"], weights: { pro_ai: [1, 2, 7, 42, 48], balanced: [1, 3, 15, 48, 33], skeptical: [3, 8, 22, 42, 25] } },
+            { section: "tab-priorities", id: "q35b_final_decision_maker", label: "Q35b — Final decision maker من يتخذ القرار النهائي؟", entryId: "", options: ["Physician | الطبيب", "Respiratory Therapist | أخصائي العلاج التنفسي", "Shared decision | قرار مشترك", "Varies by type of decision | يختلف حسب نوع القرار"], weights: { pro_ai: [35, 25, 30, 10], balanced: [40, 20, 30, 10], skeptical: [45, 15, 25, 15] } }
         ];
 
-        let currentActiveTab = "tab-demographics";
+        let activeTab = "tab-demographics";
+        let activeFormId = localStorage.getItem("ai_form_id") || "";
 
-        // Tab Switcher
         function switchTab(tabId) {
-            currentActiveTab = tabId;
-            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-            const targetBtn = document.getElementById(`btn-${tabId}`);
-            if (targetBtn) targetBtn.classList.add("active");
+            activeTab = tabId;
+            document.querySelectorAll(".tab-btn").forEach(b => {
+                b.classList.remove("border-teal-600", "text-teal-700", "font-bold");
+                b.classList.add("text-slate-600");
+            });
+            const btn = document.getElementById(`btn-${tabId}`);
+            if (btn) {
+                btn.classList.add("border-teal-600", "text-teal-700", "font-bold");
+                btn.classList.remove("text-slate-600");
+            }
             renderQuestions();
         }
 
-        // Render Question Cards for Active Tab
         function renderQuestions() {
             const container = document.getElementById("questionsContainer");
             container.innerHTML = "";
+            const list = surveyQuestions.filter(q => q.section === activeTab);
 
-            const filtered = surveyQuestions.filter(q => q.section === currentActiveTab);
-
-            filtered.forEach((q) => {
+            list.forEach(q => {
                 const card = document.createElement("div");
-                card.className = "bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4 hover:border-slate-300 transition";
+                card.className = "bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-3";
 
-                const header = document.createElement("div");
-                header.className = "flex items-start justify-between gap-3 border-b border-slate-100 pb-3";
-                
+                const titleRow = document.createElement("div");
+                titleRow.className = "flex justify-between items-start gap-2 border-b border-slate-100 pb-2";
+
                 const title = document.createElement("h4");
-                title.className = "text-sm font-bold text-slate-800 leading-snug";
+                title.className = "text-xs font-bold text-slate-800 leading-snug";
                 title.innerText = q.label;
 
-                const badge = document.createElement("span");
-                badge.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap";
-                badge.innerText = q.entryId;
+                const entryBadge = document.createElement("span");
+                entryBadge.className = "text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 whitespace-nowrap";
+                entryBadge.innerText = q.entryId ? q.entryId.replace("entry.", "") : "no entry ID";
 
-                header.appendChild(title);
-                header.appendChild(badge);
-                card.appendChild(header);
-
-                // Option Sliders
-                const list = document.createElement("div");
-                list.className = "space-y-3";
+                titleRow.appendChild(title);
+                titleRow.appendChild(entryBadge);
+                card.appendChild(titleRow);
 
                 q.options.forEach((opt, idx) => {
                     const row = document.createElement("div");
                     row.className = "space-y-1";
 
                     const meta = document.createElement("div");
-                    meta.className = "flex justify-between items-center text-xs text-slate-600";
+                    meta.className = "flex justify-between text-[11px] text-slate-600";
 
-                    const optLabel = document.createElement("span");
-                    optLabel.className = "font-medium text-[11px] truncate pr-2";
-                    optLabel.innerText = opt;
+                    const optName = document.createElement("span");
+                    optName.className = "truncate pr-2";
+                    optName.innerText = opt;
 
-                    const valBadge = document.createElement("span");
-                    valBadge.id = `${q.id}_pct_${idx}`;
-                    valBadge.className = "font-bold text-teal-700 font-mono text-xs";
-                    valBadge.innerText = `${q.currentWeights ? q.currentWeights[idx] : q.weights.balanced[idx]}%`;
+                    const pctText = document.createElement("span");
+                    pctText.id = `${q.id}_pct_${idx}`;
+                    pctText.className = "font-bold text-teal-700 font-mono";
+                    const currentVal = q.currentWeights ? q.currentWeights[idx] : q.weights.balanced[idx];
+                    pctText.innerText = `${currentVal}%`;
 
-                    meta.appendChild(optLabel);
-                    meta.appendChild(valBadge);
+                    meta.appendChild(optName);
+                    meta.appendChild(pctText);
 
                     const slider = document.createElement("input");
                     slider.type = "range";
                     slider.min = "0";
                     slider.max = "100";
-                    slider.value = q.currentWeights ? q.currentWeights[idx] : q.weights.balanced[idx];
-                    slider.className = "w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600";
-                    slider.id = `${q.id}_slide_${idx}`;
+                    slider.value = currentVal;
+                    slider.className = "w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal-600";
                     slider.oninput = (e) => {
-                        valBadge.innerText = `${e.target.value}%`;
+                        pctText.innerText = `${e.target.value}%`;
                         if (!q.currentWeights) q.currentWeights = [...q.weights.balanced];
                         q.currentWeights[idx] = parseInt(e.target.value);
                     };
 
                     row.appendChild(meta);
                     row.appendChild(slider);
-                    list.appendChild(row);
+                    card.appendChild(row);
                 });
 
-                card.appendChild(list);
                 container.appendChild(card);
             });
         }
 
-        // Apply Presets Across All Questions
-        function applyPreset(presetName) {
-            surveyQuestions.forEach((q) => {
-                if (q.weights && q.weights[presetName]) {
-                    q.currentWeights = [...q.weights[presetName]];
+        function applyPreset(name) {
+            surveyQuestions.forEach(q => {
+                if (q.weights && q.weights[name]) {
+                    q.currentWeights = [...q.weights[name]];
                 }
             });
             renderQuestions();
-            log(`Applied preset: ${presetName.toUpperCase()}`, "text-teal-400 font-semibold");
+            log(`Applied preset: ${name.toUpperCase()}`, "text-teal-400 font-bold");
         }
 
-        // Weighted Choice Generator
+        function toggleModal(id) {
+            const m = document.getElementById(id);
+            m.classList.toggle("hidden");
+            if (id === "entryModal" && !m.classList.contains("hidden")) {
+                renderEntryList();
+            }
+        }
+
+        function renderEntryList() {
+            const c = document.getElementById("entryListContainer");
+            c.innerHTML = "";
+            surveyQuestions.forEach((q, i) => {
+                const row = document.createElement("div");
+                row.className = "flex items-center gap-2";
+                row.innerHTML = `
+                    <span class="w-6 font-mono text-slate-400 font-bold">${i+1}</span>
+                    <span class="flex-1 truncate text-slate-700 text-[11px]">${q.label}</span>
+                    <input type="text" value="${q.entryId}" onchange="qUpdateEntry('${q.id}', this.value)" placeholder="entry.XXXXX" class="w-28 px-2 py-1 bg-white border rounded font-mono text-[10px]">
+                `;
+                c.appendChild(row);
+            });
+        }
+
+        function qUpdateEntry(qId, val) {
+            const q = surveyQuestions.find(x => x.id === qId);
+            if (q) {
+                q.entryId = val.trim();
+                saveEntryMappings();
+                renderQuestions();
+            }
+        }
+
+        function autoConnectForm() {
+            const raw = document.getElementById("formLinkInput").value.trim();
+            if (!raw) { alert("Please paste your Google Form URL."); return; }
+
+            // Extract Form ID
+            let match = raw.match(/\/d\/e\/([a-zA-Z0-9_-]+)/);
+            if (match) {
+                activeFormId = match[1];
+            } else if (raw.length > 25 && !raw.includes("/")) {
+                activeFormId = raw;
+            }
+
+            // Extract entry IDs if present in pre-filled URL
+            const urlParams = new URLSearchParams(raw.includes("?") ? raw.split("?")[1] : "");
+            const entries = [];
+            for (let [k] of urlParams.entries()) {
+                if (k.startsWith("entry.")) entries.push(k);
+            }
+
+            if (entries.length > 0) {
+                entries.forEach((eKey, idx) => {
+                    if (surveyQuestions[idx]) surveyQuestions[idx].entryId = eKey;
+                });
+                saveEntryMappings();
+                log(`[✓] Auto-mapped ${entries.length} entry keys!`, "text-cyan-400 font-bold");
+            }
+
+            if (activeFormId) {
+                localStorage.setItem("ai_form_id", activeFormId);
+                updateConnectionState(true);
+                log(`[✓] Form Connected! ID: ${activeFormId.substring(0, 10)}...`);
+                alert("Form successfully linked and saved!");
+            } else {
+                alert("Could not detect Form ID. Please ensure the link contains /d/e/FORM_ID/...");
+            }
+        }
+
+        function saveEntryMappings() {
+            const map = {};
+            surveyQuestions.forEach(q => { if (q.entryId) map[q.id] = q.entryId; });
+            localStorage.setItem("ai_entry_map", JSON.stringify(map));
+        }
+
+        function loadEntryMappings() {
+            const raw = localStorage.getItem("ai_entry_map");
+            if (raw) {
+                try {
+                    const map = JSON.parse(raw);
+                    surveyQuestions.forEach(q => { if (map[q.id]) q.entryId = map[q.id]; });
+                } catch(e) {}
+            }
+        }
+
+        function updateConnectionState(isConnected) {
+            const badge = document.getElementById("connectionBadge");
+            const txt = document.getElementById("linkedFormIdText");
+            if (isConnected && activeFormId) {
+                badge.innerText = "● Form Connected";
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+                txt.innerHTML = `Form ID: <code class="text-teal-700 font-bold">${activeFormId.substring(0, 15)}...</code>`;
+            } else {
+                badge.innerText = "⚠️ Needs Setup";
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800";
+                txt.innerHTML = `Form ID: <code class="text-slate-600">Not connected</code>`;
+            }
+        }
+
         function selectWeightedChoice(options, weights) {
-            const sum = weights.reduce((acc, val) => acc + val, 0);
+            const sum = weights.reduce((acc, v) => acc + v, 0);
             if (sum === 0) return options[0];
             let rand = Math.random() * sum;
             for (let i = 0; i < options.length; i++) {
@@ -599,173 +450,97 @@
             return options[0];
         }
 
-        // Logging Utility
-        function log(msg, styleClass = "text-emerald-400") {
-            const consoleBox = document.getElementById("logConsole");
+        function log(msg, cls = "text-emerald-400") {
+            const c = document.getElementById("logConsole");
             const p = document.createElement("p");
-            p.className = styleClass;
-            const time = new Date().toLocaleTimeString();
-            p.innerText = `[${time}] ${msg}`;
-            consoleBox.appendChild(p);
-            consoleBox.scrollTop = consoleBox.scrollHeight;
+            p.className = cls;
+            p.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            c.appendChild(p);
+            c.scrollTop = c.scrollHeight;
         }
 
         function clearLogs() {
-            document.getElementById("logConsole").innerHTML = `<p class="text-slate-500">// Console cleared.</p>`;
+            document.getElementById("logConsole").innerHTML = `<p class="text-slate-500">// Log cleared.</p>`;
         }
 
-        function toggleModal(id) {
-            const modal = document.getElementById(id);
-            modal.classList.toggle("hidden");
-            if (!modal.classList.contains("hidden")) {
-                populateEntryTable();
-            }
-        }
-
-        function populateEntryTable() {
-            const tbody = document.getElementById("entryIdTableBody");
-            tbody.innerHTML = "";
-            surveyQuestions.forEach((q, idx) => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td class="py-2 font-mono text-slate-400 font-bold">${idx + 1}</td>
-                    <td class="py-2 pr-2 text-slate-700 truncate max-w-xs" title="${q.label}">${q.label}</td>
-                    <td class="py-2">
-                        <input type="text" value="${q.entryId}" onchange="updateEntryId('${q.id}', this.value)" class="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs font-mono">
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function updateEntryId(qId, newVal) {
-            const item = surveyQuestions.find(x => x.id === qId);
-            if (item) {
-                item.entryId = newVal.trim();
-                renderQuestions();
-            }
-        }
-
-        // Prefill Link Parser
-        function parsePrefillUrl() {
-            const urlStr = document.getElementById("prefillInput").value.trim();
-            if (!urlStr) { alert("Please paste a prefilled Google Form URL."); return; }
-            try {
-                const url = new URL(urlStr);
-                const params = new URLSearchParams(url.search);
-                const keys = Array.from(params.keys()).filter(k => k.startsWith("entry."));
-                
-                if (keys.length === 0) {
-                    alert("No 'entry.XXXXX' parameters detected in this URL.");
-                    return;
-                }
-
-                keys.forEach((key, idx) => {
-                    if (surveyQuestions[idx]) {
-                        surveyQuestions[idx].entryId = key;
-                    }
-                });
-
-                populateEntryTable();
-                renderQuestions();
-                alert(`Successfully matched ${keys.length} entry keys!`);
-            } catch (e) {
-                alert("Invalid URL string format.");
-            }
-        }
-
-        // Main Headless Submission Execution Loop
         async function runSubmissions() {
-            let formId = document.getElementById("formId").value.trim();
-            const count = parseInt(document.getElementById("subCount").value);
-            const delay = parseInt(document.getElementById("subDelay").value) || 300;
+            if (!activeFormId) {
+                alert("Please connect your Google Form link in Step 1 first!");
+                return;
+            }
+
+            const unmapped = surveyQuestions.filter(q => !q.entryId);
+            if (unmapped.length > 0) {
+                const proceed = confirm(`Notice: ${unmapped.length} questions do not have exact entry IDs assigned. Google will only record questions with matching entry IDs.\n\nDid you paste a prefilled link in Step 1? Click OK to proceed anyway, or Cancel to link.`);
+                if (!proceed) return;
+            }
+
+            const count = parseInt(document.getElementById("subCount").value) || 10;
+            const delay = parseInt(document.getElementById("subDelay").value) || 400;
             const enforceConsent = document.getElementById("enforceConsent").checked;
 
-            if (!formId) { alert("Missing Google Form ID"); return; }
-            if (formId.includes("/d/e/")) {
-                const m = formId.match(/\/d\/e\/([a-zA-Z0-9_-]+)/);
-                if (m) formId = m[1];
-            }
-            if (isNaN(count) || count < 1) { alert("Please provide a valid count (>= 1)."); return; }
+            const submitUrl = `https://docs.google.com/forms/d/e/${activeFormId}/formResponse`;
 
-            const submitUrl = `https://docs.google.com/forms/d/e/${formId}/formResponse`;
+            const btn = document.getElementById("startBtn");
+            const pBox = document.getElementById("progressBox");
+            const pBar = document.getElementById("progressBar");
+            const pPct = document.getElementById("progressPct");
+            const pStat = document.getElementById("progressStatus");
 
-            const startBtn = document.getElementById("startBtn");
-            const progressBox = document.getElementById("progressBox");
-            const progressBar = document.getElementById("progressBar");
-            const progressPct = document.getElementById("progressPct");
-            const progressStatus = document.getElementById("progressStatus");
+            btn.disabled = true;
+            btn.classList.add("bg-slate-400");
+            pBox.classList.remove("hidden");
 
-            startBtn.disabled = true;
-            startBtn.classList.replace("bg-teal-600", "bg-slate-400");
-            progressBox.classList.remove("hidden");
-
-            log(`Starting headless dispatch for ${count} response(s)...`, "text-cyan-400 font-bold");
+            log(`Dispatching ${count} responses directly to Google...`, "text-cyan-400 font-bold");
 
             let successful = 0;
 
             for (let i = 0; i < count; i++) {
-                progressStatus.innerText = `Submitting response ${i + 1} of ${count}...`;
+                pStat.innerText = `Sending #${i + 1} of ${count}...`;
 
                 const formData = new URLSearchParams();
-
-                // Required for multi-page Google Forms (7 sections = pages 0 to 6)
                 formData.append("pageHistory", "0,1,2,3,4,5,6");
 
-                let chosenProfession = "";
+                let profession = "";
                 let usedAI = true;
 
-                surveyQuestions.forEach((q) => {
-                    const weights = q.options.map((_, oIdx) => {
-                        return q.currentWeights ? q.currentWeights[oIdx] : q.weights.balanced[oIdx];
-                    });
+                surveyQuestions.forEach(q => {
+                    if (!q.entryId) return; // Skip if no entry ID mapped
 
-                    // Q1 Consent override if locked
+                    const weights = q.options.map((_, oIdx) => q.currentWeights ? q.currentWeights[oIdx] : q.weights.balanced[oIdx]);
+
                     if (q.id === "q1_consent" && enforceConsent) {
                         formData.append(q.entryId, "نعم | Yes");
                         return;
                     }
-
-                    // Logic branch: Q3 Physician specialty only if Physician was chosen in Q2
-                    if (q.id === "q3_specialty" && !chosenProfession.includes("Physician")) {
+                    if (q.id === "q3_specialty" && !profession.includes("Physician")) {
                         formData.append(q.entryId, "Not Applicaple- لا ينطبق");
                         return;
                     }
-
-                    // Logic branch: Skip Q14 if Q13 (used AI) is "No | لا"
                     if (q.id === "q14_ai_purpose" && !usedAI) {
                         return;
                     }
 
                     if (q.isCheckbox) {
                         let selected = [];
-                        q.options.forEach((opt, oIdx) => {
-                            if (Math.random() * 100 < weights[oIdx]) {
-                                selected.push(opt);
-                            }
+                        q.options.forEach((opt, idx) => {
+                            if (Math.random() * 100 < weights[idx]) selected.push(opt);
                         });
-                        
-                        // Handle max selections (e.g. Q24 choose up to 3)
                         if (q.maxSelect && selected.length > q.maxSelect) {
                             selected = selected.sort(() => 0.5 - Math.random()).slice(0, q.maxSelect);
                         }
-                        
-                        // Ensure at least 1 checkbox is selected
-                        if (selected.length === 0) {
-                            selected.push(selectWeightedChoice(q.options, weights));
-                        }
-
-                        selected.forEach(val => formData.append(q.entryId, val));
+                        if (selected.length === 0) selected.push(selectWeightedChoice(q.options, weights));
+                        selected.forEach(v => formData.append(q.entryId, v));
                     } else {
                         const chosen = selectWeightedChoice(q.options, weights);
                         formData.append(q.entryId, chosen);
-
-                        if (q.id === "q2_profession") chosenProfession = chosen;
+                        if (q.id === "q2_profession") profession = chosen;
                         if (q.id === "q13_ai_usage") usedAI = chosen.includes("Yes") || chosen.includes("نعم");
                     }
                 });
 
                 try {
+                    // Headless POST
                     await fetch(submitUrl, {
                         method: "POST",
                         mode: "no-cors",
@@ -773,29 +548,28 @@
                         body: formData.toString()
                     });
                     successful++;
-                    log(`[✓] Response #${i + 1} dispatched successfully.`);
-                } catch (err) {
-                    log(`[!] Error on submission #${i + 1}: ${err.message}`, "text-rose-400");
+                    log(`[✓] Submission #${i + 1} submitted.`);
+                } catch (e) {
+                    log(`[!] Submission #${i + 1} network issue: ${e.message}`, "text-rose-400");
                 }
 
                 const pct = Math.round(((i + 1) / count) * 100);
-                progressBar.style.width = `${pct}%`;
-                progressPct.innerText = `${pct}%`;
+                pBar.style.width = `${pct}%`;
+                pPct.innerText = `${pct}%`;
 
-                if (i < count - 1) {
-                    await new Promise(r => setTimeout(r, delay));
-                }
+                if (i < count - 1) await new Promise(r => setTimeout(r, delay));
             }
 
-            log(`Finished! Total ${successful}/${count} responses sent.`, "text-amber-300 font-bold");
-            progressStatus.innerText = "Completed!";
-            startBtn.disabled = false;
-            startBtn.classList.replace("bg-slate-400", "bg-teal-600");
-            alert(`Process finished. Successfully posted ${successful} responses.`);
+            pStat.innerText = "All completed!";
+            btn.disabled = false;
+            btn.classList.remove("bg-slate-400");
+            log(`All ${successful} submissions sent! Check your Google Form spreadsheet.`, "text-amber-300 font-bold");
+            alert(`Process finished! Submitted ${successful} responses.`);
         }
 
-        // Initialize with standard balanced preset on page load
         window.addEventListener("DOMContentLoaded", () => {
+            loadEntryMappings();
+            if (activeFormId) updateConnectionState(true);
             applyPreset("balanced");
         });
     </script>
